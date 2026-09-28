@@ -4,6 +4,14 @@ import { WhyWeBuiltThis } from '@/components/about/why-we-built-this';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
 import { CtaBand } from '@/components/marketing/cta-band';
+import { buildPageMetadata } from '@/lib/seo/metadata';
+
+export const metadata = buildPageMetadata({
+  title: 'About',
+  description:
+    'Learn why Boundless Builders exists and discover the builders, projects, and teams shipping useful products on Stellar through Boundless.',
+  path: '/about',
+});
 
 export default function AboutPage() {
   return (

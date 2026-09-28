@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import {
@@ -7,11 +6,14 @@ import {
 } from '@/components/discover/builders-view';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
+import { buildPageMetadata } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: 'Builders',
-  description: 'Discover people building across the Boundless ecosystem.',
-};
+  description:
+    'Browse the people building across the Boundless ecosystem on Stellar. Filter builders by skills, country, and availability to find teams and talent.',
+  path: '/builders',
+});
 
 export default function BuildersPage() {
   return (

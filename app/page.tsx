@@ -11,6 +11,13 @@ import { SiteHeader } from '@/components/layout/site-header';
 import { HeroBackground } from '@/components/marketing/hero-background';
 import { Section } from '@/components/marketing/section';
 import { Button } from '@/components/ui/button';
+import { buildPageMetadata } from '@/lib/seo/metadata';
+
+export const metadata = buildPageMetadata({
+  description:
+    'Discover the builders, projects, and teams shipping on Boundless.',
+  path: '/',
+});
 
 export default function Home() {
   return (
