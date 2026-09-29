@@ -11,6 +11,19 @@ import { SiteHeader } from '@/components/layout/site-header';
 import { HeroBackground } from '@/components/marketing/hero-background';
 import { Section } from '@/components/marketing/section';
 import { Button } from '@/components/ui/button';
+import type { Metadata } from 'next';
+
+import { indexableRobots } from '@/lib/seo/metadata';
+
+export const metadata: Metadata = {
+  robots: indexableRobots,
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    url: '/',
+  },
+};
 
 export default function Home() {
   return (

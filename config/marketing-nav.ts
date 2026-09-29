@@ -21,6 +21,8 @@ import {
   Trophy,
 } from 'lucide-react';
 
+import { siteConfig } from '@/lib/seo/site';
+
 export interface NavItem {
   label: string;
   href: string;
@@ -182,6 +184,10 @@ export const socialLinks: SocialLink[] = [
     href: 'https://www.linkedin.com/company/boundlesshq',
   },
   { key: 'telegram', label: 'Telegram', href: 'https://t.me/boundlessfi' },
-  { key: 'x', label: '(formerly twitter)', href: 'https://x.com/boundless_fi' },
+  {
+    key: 'x',
+    label: '(formerly twitter)',
+    href: `https://x.com/${siteConfig.twitterHandle.replace(/^@/, '')}`,
+  },
   { key: 'support', label: 'Support', href: '/support' },
 ];
