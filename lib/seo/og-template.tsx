@@ -20,9 +20,6 @@ const fontsDir = join(process.cwd(), 'public', 'og', 'fonts');
 // next/font does not apply inside ImageResponse, so the font files are read
 // here once at module scope and handed to the renderer directly.
 const bebasNeue = await readFile(join(fontsDir, 'bebas-neue.ttf'));
-const plusJakartaSans400 = await readFile(
-  join(fontsDir, 'plus-jakarta-sans-400.ttf')
-);
 const plusJakartaSans500 = await readFile(
   join(fontsDir, 'plus-jakarta-sans-500.ttf')
 );
@@ -119,12 +116,6 @@ export function renderOgImage({
         {
           name: 'Bebas Neue',
           data: toArrayBuffer(bebasNeue),
-          style: 'normal',
-          weight: 400,
-        },
-        {
-          name: 'Plus Jakarta Sans',
-          data: toArrayBuffer(plusJakartaSans400),
           style: 'normal',
           weight: 400,
         },
