@@ -2,9 +2,9 @@
 /**
  * SEO regression check.
  *
- * Starts the production build (via `npm run start`), fetches a set of routes
- * and static files, then asserts that every HTML page contains the four
- * required SEO signals:
+ * Starts the production build with `next start`, fetches a set of routes and
+ * static files, then asserts that every HTML page contains the four required
+ * SEO signals:
  *
  *   - og:image
  *   - twitter:card
@@ -14,12 +14,14 @@
  * robots.txt and sitemap.xml are checked for a 200 status only.
  *
  * Usage:
- *   npm run seo:check
+ *   npm run build && npm run seo:check
  *
  * Environment variables:
- *   SEO_CHECK_ORIGIN  Base URL to check against (default: http://localhost:3000)
- *                     Set this to your deployed preview URL for CI checks.
- *   SEO_CHECK_PORT    Port used when starting the local server (default: 3000)
+ *   SEO_CHECK_PORT    Port for the local server (default: 3000).
+ *   SEO_CHECK_ORIGIN  Base URL to check (default: http://localhost:<port>).
+ *                     A localhost origin starts a local server on its port.
+ *                     Any other origin, such as a deployed preview URL, is
+ *                     checked as is and no server is started.
  *
  * Dependency-free: uses only Node built-ins (fetch, child_process, timers).
  */
@@ -30,8 +32,17 @@ import { spawn } from 'node:child_process';
 // Config
 // ---------------------------------------------------------------------------
 
-const PORT = process.env.SEO_CHECK_PORT ?? '3000';
-const ORIGIN = process.env.SEO_CHECK_ORIGIN ?? `http://localhost:${PORT}`;
+const DEFAULT_PORT = process.env.SEO_CHECK_PORT ?? '3000';
+const ORIGIN = (
+  process.env.SEO_CHECK_ORIGIN ?? `http://localhost:${DEFAULT_PORT}`
+).replace(/\/+$/, '');
+const ORIGIN_URL = new URL(ORIGIN);
+const IS_LOCAL = ['localhost', '127.0.0.1', '[::1]'].includes(
+  ORIGIN_URL.hostname
+);
+/** The port the local server must listen on so it matches ORIGIN. */
+const PORT = ORIGIN_URL.port || DEFAULT_PORT;
+
 const START_TIMEOUT_MS = 60_000;
 const FETCH_TIMEOUT_MS = 15_000;
 
@@ -45,8 +56,8 @@ const STATUS_ROUTES = ['/robots.txt', '/sitemap.xml'];
 const REQUIRED_PATTERNS = {
   'og:image': /<meta[^>]+property=["']og:image["'][^>]*>/i,
   'twitter:card': /<meta[^>]+name=["']twitter:card["'][^>]*>/i,
-  'canonical': /<link[^>]+rel=["']canonical["'][^>]*>/i,
-  'description': /<meta[^>]+name=["']description["'][^>]*>/i,
+  canonical: /<link[^>]+rel=["']canonical["'][^>]*>/i,
+  description: /<meta[^>]+name=["']description["'][^>]*>/i,
 };
 
 // ---------------------------------------------------------------------------
@@ -63,30 +74,104 @@ function log(msg) {
   process.stdout.write(msg + '\n');
 }
 
-/** Wait for the local server to accept connections on PORT. */
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Fetch a URL and read its whole body under one timeout, so neither slow
+ * headers nor a stalled body can hang the script.
+ */
+async function fetchText(url, ms = FETCH_TIMEOUT_MS) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    const body = await res.text();
+    return { status: res.status, ok: res.ok, body };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** True when something already answers on ORIGIN. */
+async function isOriginInUse() {
+  try {
+    await fetchText(`${ORIGIN}/`, 2_000);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Local server lifecycle
+// ---------------------------------------------------------------------------
+
+let server = null;
+/** Set before we stop the server ourselves, so its exit is not an error. */
+let stopping = false;
+/** Filled in when the server dies on its own. */
+let serverFailure = null;
+
+function startServer() {
+  server = spawn(
+    process.execPath,
+    ['node_modules/next/dist/bin/next', 'start', '-p', PORT],
+    // stdout is ignored so an unread pipe can never block the server.
+    { stdio: ['ignore', 'ignore', 'pipe'], shell: false }
+  );
+
+  // Surface server errors so failures are diagnosable.
+  server.stderr.on('data', (chunk) => {
+    process.stderr.write(dim(chunk.toString()));
+  });
+
+  server.on('error', (err) => {
+    serverFailure = `Failed to start server: ${err.message}`;
+  });
+
+  server.on('exit', (code, signal) => {
+    if (stopping) return;
+    serverFailure = signal
+      ? `Server was killed by signal ${signal}.`
+      : `Server exited with code ${code}. Did you run \`npm run build\`?`;
+  });
+}
+
+/** Stop the local server and wait until it has exited. */
+async function stopServer() {
+  if (!server || server.exitCode !== null || server.signalCode !== null) return;
+  stopping = true;
+  const exited = new Promise((resolve) => server.once('exit', resolve));
+  server.kill();
+  await Promise.race([exited, sleep(5_000)]);
+}
+
+/** Wait for the local server to answer, failing fast if it dies first. */
 async function waitForServer(timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
+    if (serverFailure) throw new Error(serverFailure);
     try {
-      const res = await fetchWithTimeout(`${ORIGIN}/`, 2_000);
+      const res = await fetchText(`${ORIGIN}/`, 2_000);
       if (res.status < 500) return;
     } catch {
       // server not ready yet
     }
-    await new Promise((r) => setTimeout(r, 500));
+    await sleep(500);
   }
   throw new Error(`Server did not respond on ${ORIGIN} within ${timeoutMs}ms.`);
 }
 
-/** fetch() with an AbortController timeout. */
-async function fetchWithTimeout(url, ms = FETCH_TIMEOUT_MS) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), ms);
-  try {
-    return await fetch(url, { signal: ctrl.signal });
-  } finally {
-    clearTimeout(timer);
-  }
+/** Stop the server, then exit with the given code. */
+async function finish(code) {
+  await stopServer();
+  process.exit(code);
+}
+
+for (const sig of ['SIGINT', 'SIGTERM']) {
+  process.on(sig, () => {
+    finish(130);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -98,28 +183,16 @@ async function fetchWithTimeout(url, ms = FETCH_TIMEOUT_MS) {
  * Returns an array of failure strings (empty = pass).
  */
 async function checkHtmlRoute(route) {
-  const url = `${ORIGIN}${route}`;
-  const failures = [];
-
-  let res;
   try {
-    res = await fetchWithTimeout(url);
-    if (!res.ok) {
-      return [`HTTP ${res.status}`];
-    }
+    const res = await fetchText(`${ORIGIN}${route}`);
+    if (!res.ok) return [`HTTP ${res.status}`];
 
-    const html = await res.text();
-
-    for (const [label, pattern] of Object.entries(REQUIRED_PATTERNS)) {
-      if (!pattern.test(html)) {
-        failures.push(`missing ${label}`);
-      }
-    }
+    return Object.entries(REQUIRED_PATTERNS)
+      .filter(([, pattern]) => !pattern.test(res.body))
+      .map(([label]) => `missing ${label}`);
   } catch (err) {
     return [`fetch failed: ${err.message}`];
   }
-
-  return failures;
 }
 
 /**
@@ -127,21 +200,17 @@ async function checkHtmlRoute(route) {
  * Returns an array of failure strings (empty = pass).
  */
 async function checkStatusRoute(route) {
-  const url = `${ORIGIN}${route}`;
-  let res;
   try {
-    res = await fetchWithTimeout(url);
+    const res = await fetchText(`${ORIGIN}${route}`);
+    return res.status === 200 ? [] : [`HTTP ${res.status}`];
   } catch (err) {
     return [`fetch failed: ${err.message}`];
   }
-  return res.status === 200 ? [] : [`HTTP ${res.status}`];
 }
 
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
-
-let server = null;
 
 async function main() {
   log('');
@@ -149,112 +218,69 @@ async function main() {
   log(dim(`Target: ${ORIGIN}`));
   log('');
 
-  // Determine whether we need to spin up a local server. If the user has set
-  // SEO_CHECK_ORIGIN to a remote URL we skip the local start step.
-  const isLocal = ORIGIN.includes('localhost') || ORIGIN.includes('127.0.0.1');
-
-  if (isLocal) {
-    log(dim('Starting production server (`npm run start`)...'));
-    server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '-p', PORT], {
-      stdio: 'pipe',
-      shell: false,
-    });
-
-    // Surface server errors so failures are diagnosable.
-    server.stderr.on('data', (chunk) => {
-      process.stderr.write(dim(chunk.toString()));
-    });
-
-    server.on('error', (err) => {
-      log(red(`Failed to start server: ${err.message}`));
-      process.exit(1);
-    });
-
-    server.on('exit', (code, signal) => {
-      if (code !== null && code !== 0) {
-        log(red(`Server exited with code ${code}`));
-        process.exit(1);
-      }
-      if (signal) {
-        log(red(`Server was killed by signal ${signal}`));
-        process.exit(1);
-      }
-    });
-
-    try {
-      await waitForServer(START_TIMEOUT_MS);
-      log(green('Server ready.'));
-      log('');
-    } catch (err) {
-      if (server) {
-        server.kill();
-      }
-      log(red(err.message));
+  if (IS_LOCAL) {
+    // Refuse to run against whatever else is on the port, such as a dev
+    // server, because the results would not describe the production build.
+    if (await isOriginInUse()) {
+      log(red(`Something is already running on ${ORIGIN}.`));
+      log(red('Stop it, or pick a free port with SEO_CHECK_PORT.'));
       process.exit(1);
     }
+
+    log(dim(`Starting production server (\`next start -p ${PORT}\`)...`));
+    startServer();
+    await waitForServer(START_TIMEOUT_MS);
+    log(green('Server ready.'));
+    log('');
   }
 
   let passed = 0;
-  let failed = 0;
   const failedRoutes = [];
 
-  // --- HTML routes ---
+  const record = (route, failures) => {
+    if (failures.length === 0) {
+      log(`  ${green('PASS')} ${route}`);
+      passed++;
+      return;
+    }
+    log(`  ${red('FAIL')} ${route}`);
+    for (const failure of failures) log(`       ${red(failure)}`);
+    failedRoutes.push(route);
+  };
+
   log(bold('HTML routes'));
   for (const route of HTML_ROUTES) {
-    const failures = await checkHtmlRoute(route);
-    if (failures.length === 0) {
-      log(`  ${green('PASS')} ${route}`);
-      passed++;
-    } else {
-      log(`  ${red('FAIL')} ${route}`);
-      for (const f of failures) {
-        log(`       ${red(f)}`);
-      }
-      failed++;
-      failedRoutes.push(route);
-    }
+    record(route, await checkHtmlRoute(route));
   }
-
   log('');
 
-  // --- Status routes ---
   log(bold('Static / XML routes (200 check)'));
   for (const route of STATUS_ROUTES) {
-    const failures = await checkStatusRoute(route);
-    if (failures.length === 0) {
-      log(`  ${green('PASS')} ${route}`);
-      passed++;
-    } else {
-      log(`  ${red('FAIL')} ${route}: ${failures.join(', ')}`);
-      failed++;
-      failedRoutes.push(route);
-    }
+    record(route, await checkStatusRoute(route));
   }
-
   log('');
 
-  // --- Summary ---
+  const failed = failedRoutes.length;
   log(bold('Summary'));
   log(`  Passed: ${green(String(passed))}`);
   log(`  Failed: ${failed > 0 ? red(String(failed)) : String(failed)}`);
   log('');
 
-  if (server) {
-    server.kill();
+  if (serverFailure) {
+    log(red(serverFailure));
+    await finish(1);
   }
 
   if (failed > 0) {
-    log(red(`SEO check failed. Fix the issues above and re-run npm run seo:check.`));
-    process.exit(1);
+    log(red('SEO check failed. Fix the issues above and re-run npm run seo:check.'));
+    await finish(1);
   }
 
   log(green('All checks passed.'));
+  await finish(0);
 }
 
-main().catch((err) => {
-  if (server) {
-    server.kill();
-  }
-  process.stderr.write(red(`Unexpected error: ${err.message}\n`));
-  process.exit(1);
+main().catch(async (err) => {
+  process.stderr.write(red(`${err.message}\n`));
+  await finish(1);
 });

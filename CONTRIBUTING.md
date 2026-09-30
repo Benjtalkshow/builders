@@ -213,8 +213,7 @@ to keep SEO consistent and prevent regressions as the app grows.
 Refer to the [generate-metadata docs](https://nextjs.org/docs/app/api-reference/functions/generate-metadata)
 and the [metadata file conventions](https://nextjs.org/docs/app/api-reference/file-conventions/metadata)
 for the API details. Check them against the Next.js version installed in this
-project (`next` in `package.json`) since the bundled docs in
-`node_modules/next/dist/docs/` are the authoritative reference for this version.
+project (`next` in `package.json`).
 
 - [ ] The route file exports a `metadata` object (or a `generateMetadata`
       function) built with `buildPageMetadata` from `lib/seo/metadata.ts`.
@@ -225,9 +224,11 @@ project (`next` in `package.json`) since the bundled docs in
       OG image template.
 - [ ] If a structured-data schema type applies (e.g. `WebPage`, `ProfilePage`,
       `ItemList`), add the corresponding JSON-LD in the route file.
-- [ ] Run `npm run seo:check` and confirm it exits with code 0. The script
-      fetches the four core routes and validates that `og:image`,
-      `twitter:card`, `link rel="canonical"`, and `description` are all
-      present.
+- [ ] Run `npm run build`, then `npm run seo:check`, and confirm it exits with
+      code 0. The script starts the production build, fetches the four core
+      routes, and validates that `og:image`, `twitter:card`,
+      `link rel="canonical"`, and `description` are all present. It also
+      checks that `/robots.txt` and `/sitemap.xml` return 200. If port 3000
+      is busy, set `SEO_CHECK_PORT` to a free port.
 
 Thanks again for helping make Boundless Builders great.
