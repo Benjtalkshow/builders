@@ -1,7 +1,14 @@
 export type RouteEntry = {
   slug: string;
   label: string;
-  changeFrequency: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+  changeFrequency:
+    | 'always'
+    | 'hourly'
+    | 'daily'
+    | 'weekly'
+    | 'monthly'
+    | 'yearly'
+    | 'never';
   priority: number;
 };
 
