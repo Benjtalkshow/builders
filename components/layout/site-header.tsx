@@ -14,10 +14,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { headerMenus } from '@/config/marketing-nav';
+import { siteConfig } from '@/lib/seo/site';
 
 /** The main Boundless app, where builders sign up and create. Opens in a new tab. */
-const LAUNCH_APP_URL =
-  process.env.NEXT_PUBLIC_BOUNDLESS_APP_URL ?? 'https://boundlessfi.xyz';
+const LAUNCH_APP_URL = siteConfig.parentUrl;
 
 type HeaderVariant = 'site' | 'blog';
 

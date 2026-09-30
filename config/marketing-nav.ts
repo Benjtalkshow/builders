@@ -21,6 +21,11 @@ import {
   Trophy,
 } from 'lucide-react';
 
+import { siteConfig } from '@/lib/seo/site';
+
+/** Boundless on GitHub, shared by the header nav, footer, and SEO schemas. */
+export const githubUrl = 'https://github.com/boundlessfi';
+
 export interface NavItem {
   label: string;
   href: string;
@@ -118,7 +123,7 @@ export const headerMenus: NavGroup[] = [
       },
       {
         label: 'GitHub',
-        href: 'https://github.com/boundlessfi',
+        href: githubUrl,
         description: 'Explore our open source',
         icon: Terminal,
       },
@@ -153,7 +158,7 @@ export const footerColumns: NavGroup[] = [
       { label: 'API Reference', href: '/docs/api' },
       { label: 'FAQs', href: '/faq' },
       { label: 'Whitepaper', href: '/whitepaper' },
-      { label: 'GitHub', href: 'https://github.com/boundlessfi' },
+      { label: 'GitHub', href: githubUrl },
     ],
   },
   {
@@ -182,6 +187,10 @@ export const socialLinks: SocialLink[] = [
     href: 'https://www.linkedin.com/company/boundlesshq',
   },
   { key: 'telegram', label: 'Telegram', href: 'https://t.me/boundlessfi' },
-  { key: 'x', label: '(formerly twitter)', href: 'https://x.com/boundless_fi' },
+  {
+    key: 'x',
+    label: '(formerly twitter)',
+    href: `https://x.com/${siteConfig.twitterHandle.replace(/^@/, '')}`,
+  },
   { key: 'support', label: 'Support', href: '/support' },
 ];
