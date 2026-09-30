@@ -30,8 +30,8 @@ import { spawn } from 'node:child_process';
 // Config
 // ---------------------------------------------------------------------------
 
-const ORIGIN = process.env.SEO_CHECK_ORIGIN ?? 'http://localhost:3000';
 const PORT = process.env.SEO_CHECK_PORT ?? '3000';
+const ORIGIN = process.env.SEO_CHECK_ORIGIN ?? `http://localhost:${PORT}`;
 const START_TIMEOUT_MS = 60_000;
 const FETCH_TIMEOUT_MS = 15_000;
 
@@ -104,20 +104,19 @@ async function checkHtmlRoute(route) {
   let res;
   try {
     res = await fetchWithTimeout(url);
+    if (!res.ok) {
+      return [`HTTP ${res.status}`];
+    }
+
+    const html = await res.text();
+
+    for (const [label, pattern] of Object.entries(REQUIRED_PATTERNS)) {
+      if (!pattern.test(html)) {
+        failures.push(`missing ${label}`);
+      }
+    }
   } catch (err) {
     return [`fetch failed: ${err.message}`];
-  }
-
-  if (!res.ok) {
-    return [`HTTP ${res.status}`];
-  }
-
-  const html = await res.text();
-
-  for (const [label, pattern] of Object.entries(REQUIRED_PATTERNS)) {
-    if (!pattern.test(html)) {
-      failures.push(`missing ${label}`);
-    }
   }
 
   return failures;
@@ -142,6 +141,8 @@ async function checkStatusRoute(route) {
 // Main
 // ---------------------------------------------------------------------------
 
+let server = null;
+
 async function main() {
   log('');
   log(bold('SEO check'));
@@ -151,11 +152,10 @@ async function main() {
   // Determine whether we need to spin up a local server. If the user has set
   // SEO_CHECK_ORIGIN to a remote URL we skip the local start step.
   const isLocal = ORIGIN.includes('localhost') || ORIGIN.includes('127.0.0.1');
-  let server = null;
 
   if (isLocal) {
     log(dim('Starting production server (`npm run start`)...'));
-    server = spawn('npm', ['run', 'start', '--', '-p', PORT], {
+    server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '-p', PORT], {
       stdio: 'pipe',
       shell: false,
     });
@@ -170,12 +170,25 @@ async function main() {
       process.exit(1);
     });
 
+    server.on('exit', (code, signal) => {
+      if (code !== null && code !== 0) {
+        log(red(`Server exited with code ${code}`));
+        process.exit(1);
+      }
+      if (signal) {
+        log(red(`Server was killed by signal ${signal}`));
+        process.exit(1);
+      }
+    });
+
     try {
       await waitForServer(START_TIMEOUT_MS);
       log(green('Server ready.'));
       log('');
     } catch (err) {
-      server.kill();
+      if (server) {
+        server.kill();
+      }
       log(red(err.message));
       process.exit(1);
     }
@@ -239,6 +252,9 @@ async function main() {
 }
 
 main().catch((err) => {
+  if (server) {
+    server.kill();
+  }
   process.stderr.write(red(`Unexpected error: ${err.message}\n`));
   process.exit(1);
 });
