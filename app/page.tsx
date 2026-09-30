@@ -13,7 +13,8 @@ import { Section } from '@/components/marketing/section';
 import { Button } from '@/components/ui/button';
 import type { Metadata } from 'next';
 
-import { indexableRobots } from '@/lib/seo/metadata';
+import { indexableRobots, sharedOpenGraph } from '@/lib/seo/metadata';
+import { siteConfig } from '@/lib/seo/site';
 
 export const metadata: Metadata = {
   robots: indexableRobots,
@@ -21,7 +22,10 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
+    ...sharedOpenGraph,
     url: '/',
+    title: siteConfig.name,
+    description: siteConfig.description,
   },
 };
 

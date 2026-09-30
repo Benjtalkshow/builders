@@ -5,18 +5,35 @@ import { WhyWeBuiltThis } from '@/components/about/why-we-built-this';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
 import { CtaBand } from '@/components/marketing/cta-band';
+import { JsonLd } from '@/components/seo/json-ld';
+import {
+  aboutPageSchema,
+  breadcrumbSchema,
+  homeBreadcrumb,
+} from '@/lib/seo/schema';
 import { siteConfig } from '@/lib/seo/site';
+
+const ABOUT_DESCRIPTION =
+  'Learn about Boundless Builders, a public showcase of people and products shipping on Stellar.';
 
 export const metadata = buildPageMetadata({
   title: 'About',
-  description:
-    'Learn about Boundless Builders, a public showcase of people and products shipping on Stellar.',
+  description: ABOUT_DESCRIPTION,
   path: '/about',
 });
+
+const aboutSchema = aboutPageSchema({ description: ABOUT_DESCRIPTION });
+const aboutBreadcrumbs = breadcrumbSchema([
+  homeBreadcrumb,
+  { name: 'About', path: '/about' },
+]);
 
 export default function AboutPage() {
   return (
     <>
+      <JsonLd data={aboutSchema} />
+      <JsonLd data={aboutBreadcrumbs} />
+
       <SiteHeader />
       <AboutHero />
       <WhyWeBuiltThis />
