@@ -3,6 +3,10 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Bebas_Neue, Plus_Jakarta_Sans } from 'next/font/google';
 
+import { JsonLd } from '@/components/seo/json-ld';
+import { sharedOpenGraph, sharedTwitter } from '@/lib/seo/metadata';
+import { organizationSchema, webSiteSchema } from '@/lib/seo/schema';
+import { siteConfig } from '@/lib/seo/site';
 import { Providers } from '@/providers';
 
 const jakarta = Plus_Jakarta_Sans({
@@ -17,12 +21,39 @@ const bebasNeue = Bebas_Neue({
 });
 
 export const metadata: Metadata = {
+  // Throws on a malformed NEXT_PUBLIC_SITE_URL so a bad value fails the build
+  // instead of silently resolving every canonical to localhost.
+  metadataBase: new URL(siteConfig.url),
   title: {
-    default: 'Boundless Builders',
-    template: '%s | Boundless Builders',
+    default: siteConfig.name,
+    template: `%s | ${siteConfig.name}`,
   },
-  description:
-    'Discover the builders, projects, and teams shipping on Boundless.',
+  description: siteConfig.description,
+  applicationName: siteConfig.name,
+  authors: [{ name: siteConfig.name }],
+  creator: siteConfig.name,
+  publisher: siteConfig.name,
+  keywords: [
+    'Stellar',
+    'builders',
+    'web3 projects',
+    'Boundless',
+    'developers',
+    'teams',
+  ],
+  openGraph: {
+    ...sharedOpenGraph,
+    title: siteConfig.name,
+    description: siteConfig.description,
+  },
+  twitter: {
+    ...sharedTwitter,
+    title: siteConfig.name,
+    description: siteConfig.description,
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export const viewport: Viewport = {
@@ -46,6 +77,8 @@ export default function RootLayout({
       className={`${jakarta.variable} ${bebasNeue.variable} h-full antialiased`}
     >
       <body className='flex min-h-full flex-col'>
+        <JsonLd data={organizationSchema()} />
+        <JsonLd data={webSiteSchema()} />
         <Providers>{children}</Providers>
       </body>
     </html>
