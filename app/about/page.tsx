@@ -14,7 +14,7 @@ import {
 import { siteConfig } from '@/lib/seo/site';
 
 const ABOUT_DESCRIPTION =
-  'Learn about Boundless Builders, a public showcase of people and products shipping on Stellar.';
+  'Learn why Boundless Builders exists and what you will find here: the builders, projects, and teams shipping on Stellar through Boundless.';
 
 export const metadata = buildPageMetadata({
   title: 'About',

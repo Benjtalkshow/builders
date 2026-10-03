@@ -10,7 +10,7 @@ import {
 } from '@/lib/seo/schema';
 
 const PROJECTS_DESCRIPTION =
-  'Explore the products being built across the Boundless ecosystem.';
+  'Explore the products and projects being built on Stellar through Boundless. See what teams across the ecosystem are shipping right now.';
 
 export const metadata = buildPageMetadata({
   title: 'Projects',

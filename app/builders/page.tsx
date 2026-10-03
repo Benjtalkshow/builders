@@ -15,7 +15,7 @@ import {
 } from '@/lib/seo/schema';
 
 const BUILDERS_DESCRIPTION =
-  'Discover people building across the Boundless ecosystem.';
+  'Browse the people building on Stellar through Boundless. Find builders by skill, country, and availability, and see who is open to work.';
 
 export const metadata = buildPageMetadata({
   title: 'Builders',
