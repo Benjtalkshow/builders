@@ -11,13 +11,23 @@ import { SiteHeader } from '@/components/layout/site-header';
 import { HeroBackground } from '@/components/marketing/hero-background';
 import { Section } from '@/components/marketing/section';
 import { Button } from '@/components/ui/button';
-import { buildPageMetadata } from '@/lib/seo/metadata';
+import type { Metadata } from 'next';
+
+import { indexableRobots, sharedOpenGraph } from '@/lib/seo/metadata';
 import { siteConfig } from '@/lib/seo/site';
 
-export const metadata = buildPageMetadata({
-  description: 'Discover the builders, projects, and teams shipping on Boundless.',
-  path: '/',
-});
+export const metadata: Metadata = {
+  robots: indexableRobots,
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    ...sharedOpenGraph,
+    url: '/',
+    title: siteConfig.name,
+    description: siteConfig.description,
+  },
+};
 
 export default function Home() {
   return (

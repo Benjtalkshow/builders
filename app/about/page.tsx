@@ -12,16 +12,9 @@ import {
   homeBreadcrumb,
 } from '@/lib/seo/schema';
 import { siteConfig } from '@/lib/seo/site';
-import { buildPageMetadata } from '@/lib/seo/metadata';
 
 const ABOUT_DESCRIPTION =
-  'Learn about Boundless Builders, a public showcase of people and products shipping on Stellar.';
-
-export const metadata = buildPageMetadata({
-  title: 'About',
-  description: ABOUT_DESCRIPTION,
-  path: '/about',
-});
+  'Learn why Boundless Builders exists and what you will find here: the builders, projects, and teams shipping on Stellar through Boundless.';
 
 export const metadata = buildPageMetadata({
   title: 'About',

@@ -40,18 +40,17 @@ export const indexableRobots: Metadata['robots'] = {
   },
 };
 
-/** Build consistent, route-specific metadata for public pages. */
 export function buildPageMetadata({
   title,
   description,
   path,
 }: {
-  title?: string;
+  title: string;
   description: string;
   path: string;
 }): Metadata {
   return {
-    ...(title ? { title } : {}),
+    title,
     description,
     robots: indexableRobots,
     alternates: {
@@ -59,13 +58,11 @@ export function buildPageMetadata({
     },
     openGraph: {
       ...sharedOpenGraph,
-      ...(title ? { title } : { title: siteConfig.name }),
-      description,
       url: path,
+      description,
     },
     twitter: {
       ...sharedTwitter,
-      ...(title ? { title } : { title: siteConfig.name }),
       description,
     },
   };

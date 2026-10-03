@@ -8,7 +8,6 @@ import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
 import { JsonLd } from '@/components/seo/json-ld';
 import { buildPageMetadata } from '@/lib/seo/metadata';
-import { buildPageMetadata } from '@/lib/seo/metadata';
 import {
   breadcrumbSchema,
   collectionPageSchema,
@@ -16,13 +15,7 @@ import {
 } from '@/lib/seo/schema';
 
 const BUILDERS_DESCRIPTION =
-  'Discover people building across the Boundless ecosystem.';
-
-export const metadata = buildPageMetadata({
-  title: 'Builders',
-  description: BUILDERS_DESCRIPTION,
-  path: '/builders',
-});
+  'Browse the people building on Stellar through Boundless. Find builders by skill, country, and availability, and see who is open to work.';
 
 export const metadata = buildPageMetadata({
   title: 'Builders',

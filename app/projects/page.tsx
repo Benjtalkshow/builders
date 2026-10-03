@@ -3,7 +3,6 @@ import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
 import { JsonLd } from '@/components/seo/json-ld';
 import { buildPageMetadata } from '@/lib/seo/metadata';
-import { buildPageMetadata } from '@/lib/seo/metadata';
 import {
   breadcrumbSchema,
   collectionPageSchema,
@@ -11,13 +10,7 @@ import {
 } from '@/lib/seo/schema';
 
 const PROJECTS_DESCRIPTION =
-  'Explore the products being built across the Boundless ecosystem.';
-
-export const metadata = buildPageMetadata({
-  title: 'Projects',
-  description: PROJECTS_DESCRIPTION,
-  path: '/projects',
-});
+  'Explore the products and projects being built on Stellar through Boundless. See what teams across the ecosystem are shipping right now.';
 
 export const metadata = buildPageMetadata({
   title: 'Projects',
