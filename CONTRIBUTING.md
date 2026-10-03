@@ -24,6 +24,7 @@ Please read this whole guide before your first pull request.
 - [Code style](#code-style)
 - [Branches, commits, and PRs](#branches-commits-and-prs)
 - [Pull request checklist](#pull-request-checklist)
+- [SEO checklist for new pages](#seo-checklist-for-new-pages)
 
 ## Golden rules
 
@@ -203,5 +204,31 @@ Before you open a PR, confirm:
 - [ ] `npm run build` passes (this also type-checks).
 - [ ] I attached a screenshot for any visual change.
 - [ ] No em dashes in code, comments, or copy.
+
+## SEO checklist for new pages
+
+Every new route must satisfy all of the following before merging. The goal is
+to keep SEO consistent and prevent regressions as the app grows.
+
+Refer to the [generate-metadata docs](https://nextjs.org/docs/app/api-reference/functions/generate-metadata)
+and the [metadata file conventions](https://nextjs.org/docs/app/api-reference/file-conventions/metadata)
+for the API details. Check them against the Next.js version installed in this
+project (`next` in `package.json`).
+
+- [ ] The route file exports a `metadata` object (or a `generateMetadata`
+      function) built with `buildPageMetadata` from `lib/seo/metadata.ts`.
+      Do not hand-write `<meta>` or `<link>` tags.
+- [ ] The new route is added to `lib/seo/routes.ts` so the sitemap picks it up.
+- [ ] If the page has a distinct topic (not just a sub-list of an existing
+      page), add an `opengraph-image.tsx` in the route folder using the shared
+      OG image template.
+- [ ] If a structured-data schema type applies (e.g. `WebPage`, `ProfilePage`,
+      `ItemList`), add the corresponding JSON-LD in the route file.
+- [ ] Run `npm run build`, then `npm run seo:check`, and confirm it exits with
+      code 0. The script starts the production build, fetches the four core
+      routes, and validates that `og:image`, `twitter:card`,
+      `link rel="canonical"`, and `description` are all present. It also
+      checks that `/robots.txt` and `/sitemap.xml` return 200. If port 3000
+      is busy, set `SEO_CHECK_PORT` to a free port.
 
 Thanks again for helping make Boundless Builders great.

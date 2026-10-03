@@ -12,10 +12,10 @@ import { HeroBackground } from '@/components/marketing/hero-background';
 import { Section } from '@/components/marketing/section';
 import { Button } from '@/components/ui/button';
 import { buildPageMetadata } from '@/lib/seo/metadata';
+import { siteConfig } from '@/lib/seo/site';
 
 export const metadata = buildPageMetadata({
-  description:
-    'Discover the builders, projects, and teams shipping on Boundless.',
+  description: 'Discover the builders, projects, and teams shipping on Boundless.',
   path: '/',
 });
 
